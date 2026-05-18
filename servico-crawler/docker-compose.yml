@@ -1,0 +1,83 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: webcrawler-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - webcrawler-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh "mongodb://root:password@localhost:27017/admin" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: webcrawler-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - webcrawler-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  crawler:
+    build:
+      context: ./crawler
+      dockerfile: Dockerfile
+    container_name: webcrawler-api
+    ports:
+      - "8000:8000"
+      - "50051:50051"
+      - "50052:50052"
+    environment:
+      MONGODB_URL: mongodb://root:password@mongo:27017/webcrawler?authSource=admin
+      MONGODB_DB: webcrawler
+      CRAWL_INTERVAL: 3600
+      REQUEST_TIMEOUT: 10
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      QDRANT_URL: http://qdrant:6333
+      EMBEDDING_MODEL: all-MiniLM-L6-v2
+      # LLM — lido do .env
+      LLM_PROVIDER: ${LLM_PROVIDER:-none}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama3-8b-8192}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:e2b}
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - webcrawler-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  webcrawler-network:
+    driver: bridge
+    name: webcrawler-network

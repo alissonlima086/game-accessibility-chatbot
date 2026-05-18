@@ -1,0 +1,434 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Chatbot API",
+    "description": "API do chatbot com suporte a usuários, conversas e mensagens.",
+    "version": "1.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/api/v1",
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Informe o token JWT no formato: Bearer {token}"
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Registrar novo usuário",
+        "tags": ["auth"],
+        "parameters": [
+          {"name": "body", "in": "body", "required": true, "schema": {"$ref": "#/definitions/RegisterRequest"}}
+        ],
+        "responses": {
+          "201": {"description": "Criado", "schema": {"$ref": "#/definitions/UserResponse"}},
+          "400": {"description": "Erro de validação", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "409": {"description": "Email já cadastrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login do usuário",
+        "tags": ["auth"],
+        "parameters": [
+          {"name": "body", "in": "body", "required": true, "schema": {"$ref": "#/definitions/LoginRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/LoginResponse"}},
+          "401": {"description": "Credenciais inválidas", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Retorna o usuário autenticado",
+        "tags": ["auth"],
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {"description": "OK"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Listar usuários",
+        "tags": ["users"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "limit", "in": "query", "type": "integer"},
+          {"name": "offset", "in": "query", "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "#/definitions/UserResponse"}}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "post": {
+        "summary": "Criar usuário (admin only)",
+        "tags": ["users"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "user", "in": "body", "required": true, "schema": {"$ref": "#/definitions/CreateUserRequest"}}
+        ],
+        "responses": {
+          "201": {"description": "Criado", "schema": {"$ref": "#/definitions/UserResponse"}},
+          "400": {"description": "Erro de validação", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "403": {"description": "Acesso negado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Buscar usuário por ID",
+        "tags": ["users"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/UserResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "put": {
+        "summary": "Atualizar usuário",
+        "tags": ["users"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "user", "in": "body", "required": true, "schema": {"$ref": "#/definitions/UpdateUserRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/UserResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "delete": {
+        "summary": "Deletar usuário",
+        "tags": ["users"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "204": {"description": "Deletado"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/users/{id}/conversations": {
+      "get": {
+        "summary": "Listar conversas do usuário",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "limit", "in": "query", "type": "integer"},
+          {"name": "offset", "in": "query", "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "#/definitions/ConversationResponse"}}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations": {
+      "post": {
+        "summary": "Criar conversa",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "conversation", "in": "body", "required": true, "schema": {"$ref": "#/definitions/CreateConversationRequest"}}
+        ],
+        "responses": {
+          "201": {"description": "Criado", "schema": {"$ref": "#/definitions/ConversationResponse"}},
+          "400": {"description": "Erro de validação", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations/{id}": {
+      "get": {
+        "summary": "Buscar conversa por ID",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "with_messages", "in": "query", "type": "boolean"},
+          {"name": "message_limit", "in": "query", "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/ConversationResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "put": {
+        "summary": "Atualizar conversa",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "conversation", "in": "body", "required": true, "schema": {"$ref": "#/definitions/UpdateConversationRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/ConversationResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "delete": {
+        "summary": "Deletar conversa",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "204": {"description": "Deletado"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations/{id}/close": {
+      "post": {
+        "summary": "Fechar conversa",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "204": {"description": "Fechado"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations/{id}/archive": {
+      "post": {
+        "summary": "Arquivar conversa",
+        "tags": ["conversations"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "204": {"description": "Arquivado"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations/{id}/messages": {
+      "get": {
+        "summary": "Listar mensagens da conversa",
+        "tags": ["messages"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "limit", "in": "query", "type": "integer"},
+          {"name": "offset", "in": "query", "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "#/definitions/MessageResponse"}}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/conversations/{id}/chat": {
+      "post": {
+        "summary": "Enviar mensagem e receber resposta do bot",
+        "tags": ["chat"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "string"},
+          {"name": "message", "in": "body", "required": true, "schema": {"$ref": "#/definitions/SendUserMessageRequest"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "user_message": {"$ref": "#/definitions/MessageResponse"},
+                "bot_message": {"$ref": "#/definitions/MessageResponse"}
+              }
+            }
+          },
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Conversa não encontrada", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/messages": {
+      "post": {
+        "summary": "Criar mensagem direta",
+        "tags": ["messages"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "message", "in": "body", "required": true, "schema": {"$ref": "#/definitions/CreateMessageRequest"}}
+        ],
+        "responses": {
+          "201": {"description": "Criado", "schema": {"$ref": "#/definitions/MessageResponse"}},
+          "400": {"description": "Erro de validação", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    },
+    "/messages/{id}": {
+      "get": {
+        "summary": "Buscar mensagem por ID",
+        "tags": ["messages"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "#/definitions/MessageResponse"}},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      },
+      "delete": {
+        "summary": "Deletar mensagem",
+        "tags": ["messages"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "type": "string"}],
+        "responses": {
+          "204": {"description": "Deletado"},
+          "401": {"description": "Não autorizado", "schema": {"$ref": "#/definitions/ErrorResponse"}},
+          "404": {"description": "Não encontrado", "schema": {"$ref": "#/definitions/ErrorResponse"}}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "RegisterRequest": {
+      "type": "object",
+      "required": ["username", "email", "password", "role"],
+      "properties": {
+        "username": {"type": "string", "example": "alisson"},
+        "email": {"type": "string", "example": "alissonlima@unitins.br"},
+        "password": {"type": "string", "example": "senha123", "minLength": 8},
+        "role": {"type": "string", "enum": ["USER", "ADMIN"], "example": "USER"}
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "required": ["email", "password"],
+      "properties": {
+        "email": {"type": "string", "example": "alissonlima@unitins.br"},
+        "password": {"type": "string", "example": "senha123"}
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": {"type": "string"},
+        "user": {"$ref": "#/definitions/UserResponse"}
+      }
+    },
+    "CreateUserRequest": {
+      "type": "object",
+      "required": ["username", "email", "role"],
+      "properties": {
+        "username": {"type": "string", "example": "alisson"},
+        "email": {"type": "string", "example": "alissonlima@unitins.br"},
+        "role": {"type": "string", "enum": ["USER", "ADMIN"], "example": "USER"}
+      }
+    },
+    "UpdateUserRequest": {
+      "type": "object",
+      "required": ["username", "email", "role"],
+      "properties": {
+        "username": {"type": "string"},
+        "email": {"type": "string"},
+        "role": {"type": "string", "enum": ["USER", "ADMIN"]}
+      }
+    },
+    "UserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "username": {"type": "string"},
+        "email": {"type": "string"},
+        "role": {"type": "string"},
+        "is_active": {"type": "boolean"},
+        "created_at": {"type": "string"},
+        "updated_at": {"type": "string"}
+      }
+    },
+    "CreateConversationRequest": {
+      "type": "object",
+      "required": ["user_id", "title"],
+      "properties": {
+        "user_id": {"type": "string", "example": "uuid-do-usuario"},
+        "title": {"type": "string", "example": "Minha conversa"}
+      }
+    },
+    "UpdateConversationRequest": {
+      "type": "object",
+      "required": ["title", "status"],
+      "properties": {
+        "title": {"type": "string"},
+        "status": {"type": "string", "enum": ["OPEN", "CLOSED", "ARCHIVED"]}
+      }
+    },
+    "ConversationResponse": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "user_id": {"type": "string"},
+        "title": {"type": "string"},
+        "status": {"type": "string"},
+        "messages": {"type": "array", "items": {"$ref": "#/definitions/MessageResponse"}},
+        "created_at": {"type": "string"},
+        "updated_at": {"type": "string"}
+      }
+    },
+    "CreateMessageRequest": {
+      "type": "object",
+      "required": ["conversation_id", "content", "role"],
+      "properties": {
+        "conversation_id": {"type": "string"},
+        "content": {"type": "string"},
+        "role": {"type": "string", "enum": ["USER", "BOT"]}
+      }
+    },
+    "SendUserMessageRequest": {
+      "type": "object",
+      "required": ["content"],
+      "properties": {
+        "content": {"type": "string", "example": "Olá, como você está?"}
+      }
+    },
+    "MessageResponse": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "conversation_id": {"type": "string"},
+        "reply_to_id": {"type": "string"},
+        "content": {"type": "string"},
+        "role": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "created_at": {"type": "string"},
+        "crawler_result": {"$ref": "#/definitions/CrawlerResultResponse"}
+      }
+    },
+    "CrawlerResultResponse": {
+      "type": "object",
+      "properties": {
+        "summary": {"type": "string"},
+        "source_count": {"type": "integer"}
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {"type": "string"}
+      }
+    }
+  }
+}

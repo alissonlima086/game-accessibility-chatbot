@@ -1,0 +1,206 @@
+syntax = "proto3";
+
+package crawler;
+
+option go_package = "backend/internal/grpc/proto";
+
+service AdminService {
+  rpc AddLinks(AddLinksRequest) returns (AddLinksResponse);
+  rpc ExtractLinks(ExtractLinksRequest) returns (ExtractLinksResponse);
+  rpc CrawlSinglePage(CrawlSinglePageRequest) returns (CrawlSinglePageResponse);
+
+  rpc GetLinksStatus(Empty) returns (LinksStatusResponse);
+  rpc GetLinksStatusByDomain(Empty) returns (LinksByDomainResponse);
+  rpc ListLinks(ListLinksRequest) returns (ListLinksResponse);
+  rpc DeleteLink(DeleteLinkRequest) returns (OperationResponse);
+
+  rpc ListPages(ListPagesRequest) returns (ListPagesResponse);
+  rpc ListPagesByDomain(ListPagesByDomainRequest) returns (ListPagesResponse);
+  rpc GetPage(GetPageRequest) returns (PageDetailResponse);
+
+  rpc GetDomainStats(DomainRequest) returns (DomainStatsResponse);
+  rpc DeleteDomain(DomainRequest) returns (DeleteDomainResponse);
+
+  rpc TriggerCrawl(TriggerCrawlRequest) returns (CrawlResponse);
+}
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+}
+
+message Empty {}
+
+message OperationResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message AddLinksRequest {
+  repeated string urls = 1;
+}
+
+message AddLinksResponse {
+  int32 added      = 1;
+  int32 duplicated = 2;
+  int32 errors     = 3;
+}
+
+message ExtractLinksRequest {
+  int32 limit = 1;
+}
+
+message ExtractLinksResponse {
+  int32  processed   = 1;
+  int32  links_added = 2;
+  int32  errors      = 3;
+}
+
+message CrawlSinglePageRequest {
+  string url = 1;
+}
+
+message CrawlSinglePageResponse {
+  bool   success = 1;
+  string message = 2;
+  string title   = 3;
+}
+
+message DeleteLinkRequest {
+  string url = 1;
+}
+
+message LinkItem {
+  string url        = 1;
+  string status     = 2;
+  int32  depth      = 3;
+  string domain     = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message ListLinksRequest {
+  int32  limit  = 1;
+  int32  skip   = 2;
+  string status = 3;
+}
+
+message ListLinksResponse {
+  repeated LinkItem links = 1;
+  int32             total = 2;
+}
+
+message LinksStatusResponse {
+  int32 total   = 1;
+  int32 pending = 2;
+  int32 success = 3;
+  int32 error   = 4;
+  int32 blocked = 5;
+}
+
+message LinkDomainStat {
+  string domain  = 1;
+  int32  total   = 2;
+  int32  pending = 3;
+  int32  success = 4;
+  int32  error   = 5;
+}
+
+message LinksByDomainResponse {
+  repeated LinkDomainStat domains = 1;
+}
+
+message ListPagesRequest {
+  int32 limit = 1;
+  int32 skip  = 2;
+}
+
+message ListPagesByDomainRequest {
+  string domain = 1;
+  int32  limit  = 2;
+  int32  skip   = 3;
+}
+
+message PageSummary {
+  string url         = 1;
+  string title       = 2;
+  string description = 3;
+  int32  status_code = 4;
+  int32  word_count  = 5;
+  string crawled_at  = 6;
+}
+
+message ListPagesResponse {
+  repeated PageSummary pages = 1;
+}
+
+message GetPageRequest {
+  string url = 1;
+}
+
+message PageDetailResponse {
+  string          url              = 1;
+  string          title            = 2;
+  string          description      = 3;
+  string          text_content     = 4;
+  string          summary          = 5;
+  int32           word_count       = 6;
+  repeated string keywords         = 7;
+  string          language         = 8;
+  int32           status_code      = 9;
+  string          crawled_at       = 10;
+  string          embedding_status = 11;
+  int32           chunks_count     = 12;
+}
+
+message DomainRequest {
+  string domain = 1;
+}
+
+message DomainStatsResponse {
+  string domain              = 1;
+  int32  total_links         = 2;
+  int32  total_pages_crawled = 3;
+  int32  pending             = 4;
+  int32  extracted           = 5;
+  int32  success             = 6;
+  int32  error               = 7;
+  int32  blocked             = 8;
+}
+
+message DeleteDomainResponse {
+  int32 links_deleted = 1;
+  int32 pages_deleted = 2;
+}
+
+message TriggerCrawlRequest {
+  int32 limit = 1;
+}
+
+message CrawlResponse {
+  string message   = 1;
+  string timestamp = 2;
+}
+
+message SearchRequest {
+  string query  = 1;
+  int32  limit  = 2;
+  string domain = 3;
+}
+
+message SearchResult {
+  float  score        = 1;
+  string url          = 2;
+  string chunk_text   = 3;
+  int32  chunk_index  = 4;
+  int32  total_chunks = 5;
+}
+
+// metrics_json carrega RAGMetrics serializado em JSON.
+// Campo opcional — string vazia significa sem métricas (retrocompatível).
+message SearchResponse {
+  string                query         = 1;
+  string                answer        = 2;
+  int32                 results_count = 3;
+  repeated SearchResult results       = 4;
+  string                metrics_json  = 5;
+}
