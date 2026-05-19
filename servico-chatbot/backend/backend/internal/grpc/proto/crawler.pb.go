@@ -1723,7 +1723,6 @@ type SearchResponse struct {
 	Answer        string                 `protobuf:"bytes,2,opt,name=answer,proto3" json:"answer,omitempty"`
 	ResultsCount  int32                  `protobuf:"varint,3,opt,name=results_count,json=resultsCount,proto3" json:"results_count,omitempty"`
 	Results       []*SearchResult        `protobuf:"bytes,4,rep,name=results,proto3" json:"results,omitempty"`
-	MetricsJson   string                 `protobuf:"bytes,5,opt,name=metrics_json,json=metricsJson,proto3" json:"metrics_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1784,13 +1783,6 @@ func (x *SearchResponse) GetResults() []*SearchResult {
 		return x.Results
 	}
 	return nil
-}
-
-func (x *SearchResponse) GetMetricsJson() string {
-	if x != nil {
-		return x.MetricsJson
-	}
-	return ""
 }
 
 var File_crawler_proto protoreflect.FileDescriptor

@@ -13,6 +13,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onLogout;
   final VoidCallback? onOpenDrawer;
   final VoidCallback? onOpenAdminPanel;
+  final VoidCallback? onOpenProfile; // Fix #3
 
   const TopBar({
     super.key,
@@ -25,6 +26,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onLogout,
     this.onOpenDrawer,
     this.onOpenAdminPanel,
+    this.onOpenProfile,
   });
 
   @override
@@ -37,9 +39,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: const BoxDecoration(
         color: AppTheme.bgDark,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.divider, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppTheme.divider, width: 1)),
       ),
       child: SafeArea(
         bottom: false,
@@ -49,8 +49,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
               IconButton(
                 icon: Icon(
                   sidebarOpen ? Icons.menu_open_rounded : Icons.menu_rounded,
-                  color: AppTheme.iconColor,
-                  size: 20,
+                  color: AppTheme.iconColor, size: 20,
                 ),
                 onPressed: onToggleSidebar,
               )
@@ -59,7 +58,6 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
                 icon: const Icon(Icons.menu_rounded, color: AppTheme.iconColor, size: 20),
                 onPressed: onOpenDrawer,
               ),
-
             Expanded(
               child: Text(
                 title,
@@ -73,7 +71,6 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-
             IconButton(
               icon: const Icon(Icons.add_rounded, color: AppTheme.iconColor, size: 20),
               onPressed: onNewChat,
@@ -83,6 +80,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
               user: user,
               onLogout: onLogout,
               onOpenAdminPanel: onOpenAdminPanel,
+              onOpenProfile: onOpenProfile,
             ),
             const SizedBox(width: 4),
           ],
@@ -96,11 +94,13 @@ class _UserAvatar extends StatelessWidget {
   final AuthUser user;
   final VoidCallback onLogout;
   final VoidCallback? onOpenAdminPanel;
+  final VoidCallback? onOpenProfile;
 
   const _UserAvatar({
     required this.user,
     required this.onLogout,
     this.onOpenAdminPanel,
+    this.onOpenProfile,
   });
 
   bool get _isAdmin => user.role == 'ADMIN';
@@ -169,8 +169,27 @@ class _UserAvatar extends StatelessWidget {
         ),
       ),
 
-      // Painel admin (só para admins)
-      if (_isAdmin)
+      // Fix #3: Meu Perfil
+      PopupMenuItem<String>(
+        value: 'profile',
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: const Row(
+          children: [
+            Icon(Icons.person_outline_rounded, size: 15, color: AppTheme.textPrimary),
+            SizedBox(width: 10),
+            Text('Meu Perfil', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+          ],
+        ),
+      ),
+
+      // Painel admin
+      if (_isAdmin) ...[
+        PopupMenuItem<String>(
+          enabled: false,
+          height: 1,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Divider(height: 1, color: AppTheme.divider),
+        ),
         PopupMenuItem<String>(
           value: 'admin',
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -178,22 +197,19 @@ class _UserAvatar extends StatelessWidget {
             children: [
               Icon(Icons.admin_panel_settings_rounded, size: 15, color: AppTheme.accent),
               SizedBox(width: 10),
-              Text(
-                'Painel de Administrador',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-              ),
+              Text('Painel de Administrador',
+                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
             ],
           ),
         ),
+      ],
 
-      if (_isAdmin)
-        PopupMenuItem<String>(
-          enabled: false,
-          height: 1,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Divider(height: 1, color: AppTheme.divider),
-        ),
-
+      PopupMenuItem<String>(
+        enabled: false,
+        height: 1,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Divider(height: 1, color: AppTheme.divider),
+      ),
       PopupMenuItem<String>(
         value: 'logout',
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -220,6 +236,7 @@ class _UserAvatar extends StatelessWidget {
 
     if (result == 'logout') onLogout();
     if (result == 'admin' && onOpenAdminPanel != null) onOpenAdminPanel!();
+    if (result == 'profile' && onOpenProfile != null) onOpenProfile!();
   }
 
   @override

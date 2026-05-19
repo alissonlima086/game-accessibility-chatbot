@@ -468,6 +468,7 @@ class _ActionsTabState extends State<_ActionsTab> {
   bool _extracting = false;
   bool _crawling = false;
   bool _crawlingSingle = false;
+  bool _rescanning = false;
   String? _lastResult;
   bool _lastResultError = false;
 
@@ -622,6 +623,47 @@ class _ActionsTabState extends State<_ActionsTab> {
     }
   }
 
+
+  Future<void> _rescanAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.bgCard,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppTheme.divider)),
+        title: const Text('Reescan Geral',
+            style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+        content: const Text(
+          'Todos os links serão marcados como pendentes e o crawler será reiniciado. Isso pode demorar.',
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: Colors.black),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _rescanning = true);
+    try {
+      final r = await widget.adminService.rescanAll(limit: 500);
+      _setResult(r['message']?.toString() ?? 'Reescan iniciado em background.');
+    } catch (e) {
+      _setResult('Erro: $e', error: true);
+    } finally {
+      setState(() => _rescanning = false);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -709,6 +751,27 @@ class _ActionsTabState extends State<_ActionsTab> {
         const SizedBox(height: 20),
         Divider(color: AppTheme.divider),
         const SizedBox(height: 16),
+
+
+        const SizedBox(height: 20),
+        Divider(color: AppTheme.divider),
+        const SizedBox(height: 16),
+
+        // ── Reescan Geral (Fix #5) ───────────────────────────────────────────
+        _SectionHeader(title: 'Reescan Geral', icon: Icons.refresh_rounded),
+        const SizedBox(height: 6),
+        const Text(
+          'Reseta todos os links para pendente e reinicia o crawling completo.',
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: 10),
+        _ActionButton(
+          label: 'Iniciar Reescan Geral',
+          icon: Icons.replay_rounded,
+          loading: _rescanning,
+          onPressed: _rescanAll,
+          color: Colors.orangeAccent,
+        ),
 
         // ── Remover Domínio ──────────────────────────────────────────────────
         _SectionHeader(title: 'Remover Domínio', icon: Icons.domain_disabled_rounded),

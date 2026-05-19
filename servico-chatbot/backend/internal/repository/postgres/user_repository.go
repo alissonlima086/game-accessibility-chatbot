@@ -88,6 +88,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	return user, nil
 }
 
+// Update persiste username, email e role — não toca no password_hash.
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 	query := `
 		UPDATE users
@@ -101,6 +102,23 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 		user.Role,
 		user.UpdatedAt,
 	)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdatePassword persiste apenas o novo password_hash — método dedicado para troca de senha.
+func (r *userRepository) UpdatePassword(ctx context.Context, userID, passwordHash string) error {
+	query := `
+		UPDATE users
+		SET password_hash = $2, updated_at = NOW()
+		WHERE id = $1 AND is_active = true
+	`
+	result, err := r.db.Exec(ctx, query, userID, passwordHash)
 	if err != nil {
 		return err
 	}
@@ -163,6 +181,7 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*domain
 	}
 	return users, nil
 }
+
 func (r *userRepository) Search(ctx context.Context, q string, limit, offset int) ([]*domain.User, error) {
 	pattern := "%" + q + "%"
 	query := `
@@ -183,7 +202,9 @@ func (r *userRepository) Search(ctx context.Context, q string, limit, offset int
 		user := &domain.User{}
 		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash,
 			&user.Role, &user.CreatedAt, &user.UpdatedAt, &user.IsActive)
-		if err != nil { return nil, err }
+		if err != nil {
+			return nil, err
+		}
 		users = append(users, user)
 	}
 	return users, rows.Err()

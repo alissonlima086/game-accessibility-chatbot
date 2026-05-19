@@ -5,7 +5,8 @@ import (
 	"backend/internal/tracing"
 )
 
-// User DTOs
+// ── User DTOs ─────────────────────────────────────────────────────────────────
+
 type CreateUserRequest struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
@@ -18,6 +19,16 @@ type UpdateUserRequest struct {
 	Role     string `json:"role" binding:"required,oneof=USER ADMIN"`
 }
 
+type UpdateProfileRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email"    binding:"required,email"`
+}
+
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password"     binding:"required,min=8"`
+}
+
 type UserResponse struct {
 	ID        string `json:"id"`
 	Username  string `json:"username"`
@@ -28,7 +39,8 @@ type UserResponse struct {
 	IsActive  bool   `json:"is_active"`
 }
 
-// Conversation DTOs
+// ── Conversation DTOs ─────────────────────────────────────────────────────────
+
 type CreateConversationRequest struct {
 	UserID string `json:"user_id" binding:"required"`
 	Title  string `json:"title" binding:"required"`
@@ -49,7 +61,8 @@ type ConversationResponse struct {
 	UpdatedAt string            `json:"updated_at"`
 }
 
-// Message DTOs
+// ── Message DTOs ──────────────────────────────────────────────────────────────
+
 type CreateMessageRequest struct {
 	ConversationID string `json:"conversation_id" binding:"required"`
 	Content        string `json:"content" binding:"required"`
@@ -60,23 +73,24 @@ type SendUserMessageRequest struct {
 	Content string `json:"content" binding:"required"`
 }
 
+type SourceResponse struct {
+	URL   string  `json:"url"`
+	Score float64 `json:"score"`
+}
+
 type MessageResponse struct {
-	ID             string                 `json:"id"`
-	ConversationID string                 `json:"conversation_id"`
-	ReplyToID      *string                `json:"reply_to_id,omitempty"`
-	Content        string                 `json:"content"`
-	Role           string                 `json:"role"`
-	Timestamp      string                 `json:"timestamp"`
-	CrawlerResult  *CrawlerResultResponse `json:"crawler_result,omitempty"`
-	CreatedAt      string                 `json:"created_at"`
+	ID             string           `json:"id"`
+	ConversationID string           `json:"conversation_id"`
+	ReplyToID      *string          `json:"reply_to_id,omitempty"`
+	Content        string           `json:"content"`
+	Role           string           `json:"role"`
+	Timestamp      string           `json:"timestamp"`
+	Sources        []SourceResponse `json:"sources,omitempty"` // ← fix #1: persistidas e lidas do DB
+	CreatedAt      string           `json:"created_at"`
 }
 
-type CrawlerResultResponse struct {
-	Summary     string `json:"summary"`
-	SourceCount int    `json:"source_count"`
-}
+// ── Auth DTOs ─────────────────────────────────────────────────────────────────
 
-// Auth DTOs
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email"    binding:"required,email"`
@@ -93,19 +107,13 @@ type LoginResponse struct {
 	User  UserResponse `json:"user"`
 }
 
-// StartChatRequest - cria conversa + envia primeira mensagem
+// ── Chat DTOs ─────────────────────────────────────────────────────────────────
+
 type StartChatRequest struct {
 	UserID  string `json:"user_id" binding:"required"`
 	Content string `json:"content" binding:"required"`
 }
 
-// SourceResponse - fonte retornada pelo crawler
-type SourceResponse struct {
-	URL   string  `json:"url"`
-	Score float64 `json:"score"`
-}
-
-// ChatResponse - resposta unificada do chat (inclui métricas distribuídas)
 type ChatResponse struct {
 	Conversation ConversationResponse `json:"conversation"`
 	UserMessage  MessageResponse      `json:"user_message"`
@@ -114,7 +122,8 @@ type ChatResponse struct {
 	Metrics      *tracing.GoMetrics   `json:"metrics,omitempty"`
 }
 
-// Helper functions to convert domain to DTO
+// ── Converters ────────────────────────────────────────────────────────────────
+
 func ToUserResponse(user *domain.User) UserResponse {
 	return UserResponse{
 		ID:        user.ID,
@@ -143,6 +152,8 @@ func ToConversationResponse(conv *domain.Conversation) ConversationResponse {
 	}
 }
 
+// ToMessageResponse converte domain.Message para DTO, expondo as sources
+// salvas em CrawlerResult.Sources (fix #1 — sources fixas ao reabrir conversa).
 func ToMessageResponse(msg *domain.Message) MessageResponse {
 	resp := MessageResponse{
 		ID:             msg.ID,
@@ -153,10 +164,11 @@ func ToMessageResponse(msg *domain.Message) MessageResponse {
 		Timestamp:      msg.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
 		CreatedAt:      msg.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
-	if msg.CrawlerResult != nil {
-		resp.CrawlerResult = &CrawlerResultResponse{
-			Summary:     msg.CrawlerResult.Summary,
-			SourceCount: msg.CrawlerResult.SourceCount,
+	// Expõe as sources persistidas em CrawlerResult
+	if msg.CrawlerResult != nil && len(msg.CrawlerResult.Sources) > 0 {
+		resp.Sources = make([]SourceResponse, 0, len(msg.CrawlerResult.Sources))
+		for _, s := range msg.CrawlerResult.Sources {
+			resp.Sources = append(resp.Sources, SourceResponse{URL: s.URL, Score: s.Score})
 		}
 	}
 	return resp

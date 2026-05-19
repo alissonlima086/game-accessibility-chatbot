@@ -75,7 +75,12 @@ func (c *AdminClient) GetLinksStatusByDomain() (*pb.LinksByDomainResponse, error
 func (c *AdminClient) ListLinks(limit, skip int32, status, urlFilter string) (*pb.ListLinksResponse, error) {
 	ctx, cancel := c.ctx()
 	defer cancel()
-	return c.client.ListLinks(ctx, &pb.ListLinksRequest{Limit: limit, Skip: skip, Status: status, UrlFilter: urlFilter})
+	return c.client.ListLinks(ctx, &pb.ListLinksRequest{
+		Limit:     limit,
+		Skip:      skip,
+		Status:    status,
+		UrlFilter: urlFilter,
+	})
 }
 
 func (c *AdminClient) DeleteLink(url string) (*pb.OperationResponse, error) {
@@ -118,4 +123,11 @@ func (c *AdminClient) TriggerCrawl(limit int32) (*pb.CrawlResponse, error) {
 	ctx, cancel := c.ctx()
 	defer cancel()
 	return c.client.TriggerCrawl(ctx, &pb.TriggerCrawlRequest{Limit: limit})
+}
+
+// RescanAll reseta todos os links para pending e inicia reprocessamento completo.
+func (c *AdminClient) RescanAll(limit int32) (*pb.CrawlResponse, error) {
+	ctx, cancel := c.ctx()
+	defer cancel()
+	return c.client.RescanAll(ctx, &pb.TriggerCrawlRequest{Limit: limit})
 }

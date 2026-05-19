@@ -212,6 +212,17 @@ func (h *AdminHandler) TriggerCrawl(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": resp.Message, "timestamp": resp.Timestamp})
 }
 
+// RescanAll reseta todos os links para pending e dispara reprocessamento completo.
+func (h *AdminHandler) RescanAll(c *gin.Context) {
+	limit := int32(parseIntQuery(c, "limit", 500))
+	resp, err := h.adminClient.RescanAll(limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": resp.Message, "timestamp": resp.Timestamp})
+}
+
 func parseIntQuery(c *gin.Context, key string, def int) int {
 	v, err := strconv.Atoi(c.DefaultQuery(key, strconv.Itoa(def)))
 	if err != nil {

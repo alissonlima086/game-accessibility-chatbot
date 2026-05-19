@@ -13,6 +13,9 @@ class AuthService {
   final ApiService _api;
   AuthUser? _currentUser;
 
+  // Fix #4: callback chamado quando o JWT expira — chat_screen registra e navega para login
+  void Function()? onSessionExpired;
+
   AuthService(this._api);
 
   AuthUser? get currentUser => _currentUser;
@@ -26,23 +29,13 @@ class AuthService {
     final email    = prefs.getString(_keyEmail);
     final role     = prefs.getString(_keyRole);
 
-    // Só autentica se TODOS os campos estão presentes e token não está vazio
-    if (token != null &&
-        token.isNotEmpty &&
-        id != null &&
-        username != null &&
-        email != null &&
-        role != null) {
+    if (token != null && token.isNotEmpty && id != null &&
+        username != null && email != null && role != null) {
       _currentUser = AuthUser(
-        id: id,
-        username: username,
-        email: email,
-        role: role,
-        token: token,
+        id: id, username: username, email: email, role: role, token: token,
       );
       _api.setToken(token);
     } else {
-      // Garante limpeza se dados estiverem incompletos
       await _clearPrefs(prefs);
     }
   }
@@ -54,8 +47,7 @@ class AuthService {
     return user;
   }
 
-  Future<AuthUser> register(
-      String username, String email, String password) async {
+  Future<AuthUser> register(String username, String email, String password) async {
     final user = await _api.register(username, email, password);
     await _persist(user);
     _currentUser = user;
@@ -67,6 +59,30 @@ class AuthService {
     _api.clearToken();
     final prefs = await SharedPreferences.getInstance();
     await _clearPrefs(prefs);
+  }
+
+  // Fix #4: chamado pela camada de API quando recebe 401
+  Future<void> handleUnauthorized() async {
+    await logout();
+    onSessionExpired?.call();
+  }
+
+  // Fix #3: atualiza perfil localmente após edição bem-sucedida
+  Future<AuthUser> updateProfile(String username, String email) async {
+    final updated = await _api.updateProfile(username, email);
+    _currentUser = updated;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUsername, updated.username);
+    await prefs.setString(_keyEmail, updated.email);
+    return updated;
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) =>
+      _api.changePassword(currentPassword, newPassword);
+
+  Future<void> deleteAccount() async {
+    await _api.deleteAccount();
+    await logout();
   }
 
   Future<void> _clearPrefs(SharedPreferences prefs) async {

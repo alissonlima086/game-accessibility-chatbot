@@ -123,4 +123,8 @@ class AdminService {
       throw ApiException(err.toString(), statusCode: res.statusCode);
     }
   }
+
+
+  Future<Map<String, dynamic>> rescanAll({int limit = 500}) =>
+      _post('/api/v1/admin/crawl/rescan?limit=$limit', {}, (d) => d as Map<String, dynamic>);
 }
