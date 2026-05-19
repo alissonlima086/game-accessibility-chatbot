@@ -85,7 +85,7 @@ type MessageResponse struct {
 	Content        string           `json:"content"`
 	Role           string           `json:"role"`
 	Timestamp      string           `json:"timestamp"`
-	Sources        []SourceResponse `json:"sources,omitempty"` // ← fix #1: persistidas e lidas do DB
+	Sources        []SourceResponse `json:"sources,omitempty"`
 	CreatedAt      string           `json:"created_at"`
 }
 
@@ -152,8 +152,7 @@ func ToConversationResponse(conv *domain.Conversation) ConversationResponse {
 	}
 }
 
-// ToMessageResponse converte domain.Message para DTO, expondo as sources
-// salvas em CrawlerResult.Sources (fix #1 — sources fixas ao reabrir conversa).
+// ToMessageResponse converte domain.Message para DTO, expondo as sources salvas em CrawlerResult.Sources
 func ToMessageResponse(msg *domain.Message) MessageResponse {
 	resp := MessageResponse{
 		ID:             msg.ID,

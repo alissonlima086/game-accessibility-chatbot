@@ -13,7 +13,6 @@ class AuthService {
   final ApiService _api;
   AuthUser? _currentUser;
 
-  // Fix #4: callback chamado quando o JWT expira — chat_screen registra e navega para login
   void Function()? onSessionExpired;
 
   AuthService(this._api);
@@ -61,13 +60,11 @@ class AuthService {
     await _clearPrefs(prefs);
   }
 
-  // Fix #4: chamado pela camada de API quando recebe 401
   Future<void> handleUnauthorized() async {
     await logout();
     onSessionExpired?.call();
   }
 
-  // Fix #3: atualiza perfil localmente após edição bem-sucedida
   Future<AuthUser> updateProfile(String username, String email) async {
     final updated = await _api.updateProfile(username, email);
     _currentUser = updated;

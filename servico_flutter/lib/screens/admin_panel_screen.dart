@@ -1,9 +1,9 @@
 // lib/screens/admin_panel_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../router.dart';
 import '../services/admin_service.dart';
 import '../utils/theme.dart';
-import 'user_management_screen.dart';
-import 'crawler_management_screen.dart';
 
 class AdminPanelScreen extends StatelessWidget {
   final AdminService adminService;
@@ -20,7 +20,7 @@ class AdminPanelScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.iconColor, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Painel de Administrador',
@@ -49,24 +49,14 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.people_rounded,
             title: 'Usuários',
             subtitle: 'Visualizar, editar e gerenciar roles de usuários',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => UserManagementScreen(adminService: adminService),
-              ),
-            ),
+            onTap: () => context.go(AppRoutes.adminUsers),
           ),
           const SizedBox(height: 12),
           _AdminCard(
             icon: Icons.travel_explore_rounded,
             title: 'Web Crawler',
             subtitle: 'Gerenciar links, extrações e crawling de páginas',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CrawlerManagementScreen(adminService: adminService),
-              ),
-            ),
+            onTap: () => context.go(AppRoutes.adminCrawler),
           ),
         ],
       ),

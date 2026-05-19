@@ -169,7 +169,6 @@ class _UserAvatar extends StatelessWidget {
         ),
       ),
 
-      // Fix #3: Meu Perfil
       PopupMenuItem<String>(
         value: 'profile',
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

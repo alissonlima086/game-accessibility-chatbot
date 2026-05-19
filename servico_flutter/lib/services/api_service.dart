@@ -12,7 +12,6 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-// Fix #4: exceção específica de token expirado/inválido
 class UnauthorizedException extends ApiException {
   const UnauthorizedException() : super('Sessão expirada. Faça login novamente.', statusCode: 401);
 }
@@ -34,7 +33,6 @@ class ApiService {
 
   Future<dynamic> _handleResponse(http.Response res) async {
     dev.log('HTTP ${res.statusCode} ${res.request?.url}', name: 'API');
-    // Fix #4: 401 lança UnauthorizedException para o app deslogar automaticamente
     if (res.statusCode == 401) throw const UnauthorizedException();
     if (res.body.isEmpty) return null;
     final body = jsonDecode(res.body);

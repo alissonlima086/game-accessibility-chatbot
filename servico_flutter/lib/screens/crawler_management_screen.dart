@@ -1,6 +1,7 @@
 // lib/screens/crawler_management_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/admin_models.dart';
 import '../services/admin_service.dart';
 import '../utils/theme.dart';
@@ -39,7 +40,7 @@ class _CrawlerManagementScreenState extends State<CrawlerManagementScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.iconColor, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text('Web Crawler',
             style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),

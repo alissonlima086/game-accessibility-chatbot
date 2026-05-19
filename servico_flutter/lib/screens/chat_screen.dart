@@ -1,10 +1,11 @@
 // lib/screens/chat_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/models.dart';
+import '../router.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../services/admin_service.dart';
 import '../utils/theme.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/delete_conversation_dialog.dart';
@@ -13,9 +14,6 @@ import '../widgets/message_list.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/welcome_view.dart';
-import 'admin_panel_screen.dart';
-import 'login_screen.dart';
-import 'profile_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final AuthService authService;
@@ -41,11 +39,10 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _error;
 
   final _scrollCtrl = ScrollController();
-  late AdminService _adminService;
 
-  ApiService get _api => widget.apiService;
-  AuthUser get _user => widget.authService.currentUser!;
-  bool get _isAdmin => _user.role == 'ADMIN';
+  ApiService get _api  => widget.apiService;
+  AuthUser   get _user => widget.authService.currentUser!;
+  bool get _isAdmin    => _user.role == 'ADMIN';
 
   String get _activeTitle {
     if (_activeConversationId == null) return 'Nova conversa';
@@ -60,8 +57,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _adminService = AdminService(_api);
-    // Fix #4: registra callback de sessão expirada
     widget.authService.onSessionExpired = _onSessionExpired;
     _loadConversations();
   }
@@ -73,19 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  // Fix #4: deslogar automaticamente ao receber 401
   void _onSessionExpired() {
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LoginScreen(
-          authService: widget.authService,
-          apiService: widget.apiService,
-        ),
-      ),
-      (_) => false,
-    );
+    context.go(AppRoutes.login);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Sessão expirada. Faça login novamente.'),
@@ -94,7 +79,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Wrapper que converte UnauthorizedException em logout automático
   Future<T> _withAuth<T>(Future<T> Function() fn) async {
     try {
       return await fn();
@@ -109,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final convs = await _withAuth(() => _api.getConversations(_user.id));
       if (mounted) setState(() => _conversations = convs);
     } on UnauthorizedException {
-      // já tratado pelo _withAuth
+      // já tratado
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     }
@@ -125,21 +109,13 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final msgs = await _withAuth(() => _api.getMessages(conv.id));
       if (mounted) {
-        setState(() {
-          _messages = msgs;
-          _loadingMessages = false;
-        });
+        setState(() { _messages = msgs; _loadingMessages = false; });
         _scrollToBottom();
       }
     } on UnauthorizedException {
       // já tratado
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _loadingMessages = false;
-        });
-      }
+      if (mounted) setState(() { _error = e.toString(); _loadingMessages = false; });
     }
   }
 
@@ -231,40 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _logout() async {
     await widget.authService.logout();
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LoginScreen(
-            authService: widget.authService,
-            apiService: widget.apiService,
-          ),
-        ),
-      );
-    }
-  }
-
-  void _openAdminPanel() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AdminPanelScreen(adminService: _adminService),
-      ),
-    );
-  }
-
-  // Fix #3: abre tela de perfil
-  void _openProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
-          authService: widget.authService,
-          apiService: widget.apiService,
-          onLogout: _logout,
-        ),
-      ),
-    );
+    if (mounted) context.go(AppRoutes.login);
   }
 
   @override
@@ -315,8 +258,8 @@ class _ChatScreenState extends State<ChatScreen> {
             onNewChat: _newChat,
             onLogout: _logout,
             onOpenDrawer: isWide ? null : () => Scaffold.of(context).openDrawer(),
-            onOpenAdminPanel: _isAdmin ? _openAdminPanel : null,
-            onOpenProfile: _openProfile,
+            onOpenAdminPanel: _isAdmin ? () => context.go(AppRoutes.admin) : null,
+            onOpenProfile: () => context.go(AppRoutes.profile),
           ),
           if (_error != null)
             ErrorBanner(
