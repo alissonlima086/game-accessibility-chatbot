@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppTheme.accentDim, width: 1.5),
                   ),
-                  child: const Icon(Icons.radar_rounded, size: 30, color: AppTheme.accent),
+                  child: const Icon(Icons.hub_rounded, size: 30, color: AppTheme.accent),
                 ),
                 const SizedBox(height: 20),
                 Text(

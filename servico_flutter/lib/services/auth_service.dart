@@ -13,6 +13,7 @@ class AuthService {
   final ApiService _api;
   AuthUser? _currentUser;
 
+  // callback chamado quando o JWT expira - chat_screen registra e navega para login
   void Function()? onSessionExpired;
 
   AuthService(this._api);

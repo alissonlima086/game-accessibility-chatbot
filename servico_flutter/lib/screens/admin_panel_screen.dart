@@ -20,7 +20,7 @@ class AdminPanelScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.iconColor, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go(AppRoutes.chat),
         ),
         title: const Text(
           'Painel de Administrador',

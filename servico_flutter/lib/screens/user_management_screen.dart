@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../models/admin_models.dart';
 import '../services/admin_service.dart';
 import '../utils/theme.dart';
+import '../router.dart';
 
 class UserManagementScreen extends StatefulWidget {
   final AdminService adminService;
@@ -226,7 +227,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.iconColor, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go(AppRoutes.admin),
         ),
         title: const Text('Usuários',
             style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),

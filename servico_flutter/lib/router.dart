@@ -12,7 +12,7 @@ import 'screens/admin_panel_screen.dart';
 import 'screens/crawler_management_screen.dart';
 import 'screens/user_management_screen.dart';
 
-// Rotas nomeadas
+// Rotas nomeadas — use AppRoutes.chat em vez de strings cruas
 abstract class AppRoutes {
   static const login   = '/login';
   static const chat    = '/';

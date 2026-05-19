@@ -33,6 +33,7 @@ class ApiService {
 
   Future<dynamic> _handleResponse(http.Response res) async {
     dev.log('HTTP ${res.statusCode} ${res.request?.url}', name: 'API');
+    // 401 lança UnauthorizedException para o app deslogar automaticamente
     if (res.statusCode == 401) throw const UnauthorizedException();
     if (res.body.isEmpty) return null;
     final body = jsonDecode(res.body);
@@ -70,7 +71,7 @@ class ApiService {
     return login(email, password);
   }
 
-  // ── Profile (Fix #3) ──────────────────────────────────────────────────────
+  // ── Profile ──────────────────────────────────────────────────────
 
   Future<AuthUser> getProfile() async {
     final res = await http.get(
