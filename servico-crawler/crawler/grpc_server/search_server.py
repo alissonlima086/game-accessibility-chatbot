@@ -1,8 +1,12 @@
 import re
 import grpc
 import logging
+import sys
+import os
 from concurrent import futures
 from urllib.parse import urlparse
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 import crawler_pb2 as pb
 import crawler_pb2_grpc as pb_grpc

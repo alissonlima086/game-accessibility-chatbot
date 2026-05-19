@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	grpcclient "backend/internal/grpc"
+	"backend/internal/domain"
 	"backend/internal/handler/dto"
 	"backend/internal/service"
 	"backend/internal/tracing"
@@ -98,7 +99,7 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 
 func (h *ChatHandler) sendAndRespond(c *gin.Context, conversationID, content string, convResp dto.ConversationResponse) {
 	ctx := c.Request.Context()
-	traceID := tracing.FromContext(ctx) // injetado pelo TracingMiddleware
+	traceID := tracing.FromContext(ctx)
 	trace := tracing.NewTrace(traceID)
 	requestStart := time.Now()
 
@@ -120,6 +121,7 @@ func (h *ChatHandler) sendAndRespond(c *gin.Context, conversationID, content str
 
 	var botContent string
 	var sources []dto.SourceResponse
+	var domainSources []domain.Source
 	var ragMetrics *tracing.RAGMetrics
 
 	if searchErr != nil || searchResult == nil {
@@ -127,18 +129,22 @@ func (h *ChatHandler) sendAndRespond(c *gin.Context, conversationID, content str
 		botContent = "Não foi possível obter uma resposta no momento."
 	} else {
 		botContent = searchResult.Proto.Answer
-		ragMetrics = searchResult.Metrics // nil se Python ainda não retornar metrics_json
+		ragMetrics = searchResult.Metrics
 		for _, r := range searchResult.Proto.Results {
 			sources = append(sources, dto.SourceResponse{
+				URL:   r.Url,
+				Score: float64(r.Score),
+			})
+			domainSources = append(domainSources, domain.Source{
 				URL:   r.Url,
 				Score: float64(r.Score),
 			})
 		}
 	}
 
-	// ── 3. Persistir mensagem do bot ────────────────────────────────────
+	// ── 3. Persistir mensagem do bot (com sources) ───────────────────────
 	spanBot := trace.Span("postgres: save bot_message")
-	botMessage, err := h.messageService.CreateBotMessage(ctx, conversationID, botContent)
+	botMessage, err := h.messageService.CreateBotMessageWithSources(ctx, conversationID, botContent, domainSources)
 	spanBot.End()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})

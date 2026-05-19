@@ -22,6 +22,7 @@ service AdminService {
   rpc DeleteDomain(DomainRequest) returns (DeleteDomainResponse);
 
   rpc TriggerCrawl(TriggerCrawlRequest) returns (CrawlResponse);
+  rpc RescanAll(TriggerCrawlRequest) returns (CrawlResponse);
 }
 
 service SearchService {
@@ -81,7 +82,7 @@ message LinkItem {
 message ListLinksRequest {
   int32  limit  = 1;
   int32  skip   = 2;
-  string status = 3;
+  string status = 3; // filtro opcional: pending, success, error, blocked
 }
 
 message ListLinksResponse {
@@ -195,12 +196,10 @@ message SearchResult {
   int32  total_chunks = 5;
 }
 
-// metrics_json carrega RAGMetrics serializado em JSON.
-// Campo opcional — string vazia significa sem métricas (retrocompatível).
 message SearchResponse {
   string                query         = 1;
   string                answer        = 2;
   int32                 results_count = 3;
   repeated SearchResult results       = 4;
-  string                metrics_json  = 5;
 }
+  

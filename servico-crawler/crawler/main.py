@@ -6,7 +6,6 @@ from datetime import datetime
 from database.connection import mongo_connection
 from service.crawler_service import CrawlerService
 from pydantic import BaseModel
-from scheduler import start_scheduler, stop_scheduler, get_scheduler_info
 from grpc_server.admin_server import serve_admin
 from grpc_server.search_server import serve_search
 from service.llm_service import build_llm_client
@@ -40,7 +39,6 @@ async def lifespan(app: FastAPI):
         mongo_connection.connect()
         db = mongo_connection.get_db()
         crawler_service = CrawlerService(db)
-        start_scheduler(crawler_service)
 
         admin_port = int(os.getenv("GRPC_ADMIN_PORT", "50051"))
         search_port = int(os.getenv("GRPC_SEARCH_PORT", "50052"))
@@ -61,7 +59,6 @@ async def lifespan(app: FastAPI):
     yield
 
     try:
-        stop_scheduler()
         grpc_admin.stop(grace=5)
         grpc_search.stop(grace=5)
         mongo_connection.disconnect()
@@ -193,6 +190,23 @@ async def trigger_crawl(limit: int = Query(50, ge=1, le=1000)):
         raise HTTPException(500, str(e))
 
 
+@app.post("/api/crawl/rescan", tags=["Crawl"])
+async def rescan_all(limit: int = Query(500, ge=1, le=5000)):
+    """Reescan completo: reseta todos os links para pending e dispara crawl em background."""
+    try:
+        count = crawler_service.rescan_all()
+        import threading
+        threading.Thread(
+            target=crawler_service.crawl_pending_pages,
+            kwargs={"limit": limit},
+            daemon=True,
+        ).start()
+        return {"message": f"Reescan iniciado: {count} link(s) marcados para reprocessamento"}
+    except Exception as e:
+        logger.error(f"Erro no rescan: {e}")
+        raise HTTPException(500, str(e))
+
+
 @app.post("/api/search/embeddings", tags=["Search"])
 async def search_embeddings(request: SearchRequest):
     try:
@@ -208,15 +222,6 @@ async def search_embeddings(request: SearchRequest):
 @app.get("/health", tags=["Sistema"])
 async def health():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
-
-
-@app.get("/scheduler/info", tags=["Sistema"])
-async def get_scheduler_status():
-    try:
-        return get_scheduler_info()
-    except Exception as e:
-        logger.error(f"Erro ao obter info do scheduler: {e}")
-        raise HTTPException(500, str(e))
 
 
 @app.get("/", tags=["Sistema"])

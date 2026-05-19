@@ -23,17 +23,13 @@ func NewMessageService(
 }
 
 func (s *MessageService) CreateMessage(ctx context.Context, conversationID, content string, role domain.MessageRole) (*domain.Message, error) {
-
 	message := domain.NewMessage(conversationID, content, role)
-
 	if err := message.Validate(); err != nil {
 		return nil, err
 	}
-
 	if err := s.messageRepo.Create(ctx, message); err != nil {
 		return nil, err
 	}
-
 	return message, nil
 }
 
@@ -45,17 +41,34 @@ func (s *MessageService) CreateBotMessage(ctx context.Context, conversationID, c
 	return s.CreateMessage(ctx, conversationID, content, domain.MessageRoleBot)
 }
 
+// CreateBotMessageWithSources persiste a mensagem do bot já com as sources do RAG.
+// Isso resolve o problema #1: ao reabrir a conversa, as fontes são carregadas do banco.
+func (s *MessageService) CreateBotMessageWithSources(ctx context.Context, conversationID, content string, sources []domain.Source) (*domain.Message, error) {
+	message := domain.NewBotMessage(conversationID, content)
+	if err := message.Validate(); err != nil {
+		return nil, err
+	}
+	if len(sources) > 0 {
+		message.CrawlerResult = &domain.CrawlerResult{
+			SourceCount: len(sources),
+			Sources:     sources,
+		}
+	}
+	if err := s.messageRepo.Create(ctx, message); err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
 func (s *MessageService) CreateBotMessageWithCrawlerResult(ctx context.Context, conversationID, content string, crawlerResult *domain.CrawlerResult) (*domain.Message, error) {
 	message, err := s.CreateBotMessage(ctx, conversationID, content)
 	if err != nil {
 		return nil, err
 	}
-
 	message.AttachCrawlerResult(crawlerResult)
 	if err := s.messageRepo.Update(ctx, message); err != nil {
 		return nil, err
 	}
-
 	return message, nil
 }
 
@@ -77,7 +90,6 @@ func (s *MessageService) UpdateMessage(ctx context.Context, message *domain.Mess
 	if err := message.Validate(); err != nil {
 		return err
 	}
-
 	message.UpdateTimestamp()
 	return s.messageRepo.Update(ctx, message)
 }

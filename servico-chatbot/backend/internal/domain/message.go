@@ -12,9 +12,17 @@ const (
 	MessageRoleBot  MessageRole = "BOT"
 )
 
+// Source representa uma fonte retornada pelo RAG, persistida junto com a mensagem.
+type Source struct {
+	URL   string  `json:"url"`
+	Score float64 `json:"score"`
+}
+
+// CrawlerResult é persistido em JSON na coluna crawler_result do Postgres.
 type CrawlerResult struct {
-	Summary     string `json:"summary"`
-	SourceCount int    `json:"source_count"`
+	Summary     string   `json:"summary"`
+	SourceCount int      `json:"source_count"`
+	Sources     []Source `json:"sources,omitempty"` // ← adicionado para fix #1
 }
 
 type Message struct {
@@ -48,26 +56,16 @@ func NewBotMessage(conversationID, content string) *Message {
 	return NewMessage(conversationID, content, MessageRoleBot)
 }
 
-func (m *Message) SetReplyTo(messageID string) {
-	m.ReplyToID = &messageID
-}
+func (m *Message) SetReplyTo(messageID string) { m.ReplyToID = &messageID }
 
 func (m *Message) AttachCrawlerResult(result *CrawlerResult) {
 	m.CrawlerResult = result
 	m.UpdateTimestamp()
 }
 
-func (m *Message) IsFromUser() bool {
-	return m.Role == MessageRoleUser
-}
-
-func (m *Message) IsFromBot() bool {
-	return m.Role == MessageRoleBot
-}
-
-func (m *Message) HasCrawlerResult() bool {
-	return m.CrawlerResult != nil
-}
+func (m *Message) IsFromUser() bool      { return m.Role == MessageRoleUser }
+func (m *Message) IsFromBot() bool       { return m.Role == MessageRoleBot }
+func (m *Message) HasCrawlerResult() bool { return m.CrawlerResult != nil }
 
 func (m *Message) Validate() error {
 	if m.ConversationID == "" {
@@ -90,7 +88,7 @@ func (m *Message) MarshalCrawlerResult() ([]byte, error) {
 }
 
 func (m *Message) UnmarshalCrawlerResult(data []byte) error {
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return nil
 	}
 	return json.Unmarshal(data, &m.CrawlerResult)

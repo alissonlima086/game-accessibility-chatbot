@@ -34,7 +34,6 @@ class ChatMessage {
 
   factory ChatMessage.fromJson(Map<String, dynamic> json,
       {List<Source>? sources}) {
-    // Tenta timestamp, fallback para created_at, fallback para now
     DateTime ts;
     try {
       final raw = json['timestamp'] as String? ?? json['created_at'] as String?;
@@ -43,13 +42,21 @@ class ChatMessage {
       ts = DateTime.now();
     }
 
+    // Fix #1: carrega sources do campo "sources" da mensagem (persistido no DB)
+    // O parâmetro externo tem precedência (usado na resposta do /chat)
+    final parsedSources = sources ??
+        ((json['sources'] as List<dynamic>?)
+                ?.map((s) => Source.fromJson(s as Map<String, dynamic>))
+                .toList() ??
+            const []);
+
     return ChatMessage(
       id:             json['id'] as String? ?? '',
       conversationId: json['conversation_id'] as String? ?? '',
       content:        json['content'] as String? ?? '',
       role:           json['role'] as String? ?? 'BOT',
       timestamp:      ts,
-      sources:        sources ?? const [],
+      sources:        parsedSources,
     );
   }
 }
@@ -102,7 +109,6 @@ class ChatResponse {
   });
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) {
-    // sources ficam no nível raiz da resposta
     final sources = (json['sources'] as List<dynamic>? ?? [])
         .map((s) => Source.fromJson(s as Map<String, dynamic>))
         .toList();
@@ -141,6 +147,14 @@ class AuthUser {
         username: json['username'] as String,
         email:    json['email'] as String,
         role:     json['role'] as String,
+        token:    token,
+      );
+
+  AuthUser copyWith({String? username, String? email}) => AuthUser(
+        id:       id,
+        username: username ?? this.username,
+        email:    email ?? this.email,
+        role:     role,
         token:    token,
       );
 }

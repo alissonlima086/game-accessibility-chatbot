@@ -412,3 +412,12 @@ class CrawlerService:
                 if field in d and d[field] is not None:
                     d[field] = str(d[field])
         return {"links": docs, "total": total}
+    def rescan_all(self) -> int:
+        """Reseta todos os links para 'pending' para reprocessamento completo."""
+        result = self.link_repo.collection.update_many(
+            {},
+            {"$set": {"status": "pending", "error": None}}
+        )
+        count = result.modified_count
+        logger.info("RescanAll: %d link(s) marcados como pending", count)
+        return count

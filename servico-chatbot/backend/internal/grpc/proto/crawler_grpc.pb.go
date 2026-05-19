@@ -51,6 +51,7 @@ type AdminServiceClient interface {
 	GetDomainStats(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*DomainStatsResponse, error)
 	DeleteDomain(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*DeleteDomainResponse, error)
 	TriggerCrawl(ctx context.Context, in *TriggerCrawlRequest, opts ...grpc.CallOption) (*CrawlResponse, error)
+	RescanAll(ctx context.Context, in *TriggerCrawlRequest, opts ...grpc.CallOption) (*CrawlResponse, error)
 }
 
 type adminServiceClient struct {
@@ -191,6 +192,16 @@ func (c *adminServiceClient) TriggerCrawl(ctx context.Context, in *TriggerCrawlR
 	return out, nil
 }
 
+func (c *adminServiceClient) RescanAll(ctx context.Context, in *TriggerCrawlRequest, opts ...grpc.CallOption) (*CrawlResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CrawlResponse)
+	err := c.cc.Invoke(ctx, "/crawler.AdminService/RescanAll", in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -208,6 +219,7 @@ type AdminServiceServer interface {
 	GetDomainStats(context.Context, *DomainRequest) (*DomainStatsResponse, error)
 	DeleteDomain(context.Context, *DomainRequest) (*DeleteDomainResponse, error)
 	TriggerCrawl(context.Context, *TriggerCrawlRequest) (*CrawlResponse, error)
+	RescanAll(context.Context, *TriggerCrawlRequest) (*CrawlResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -256,6 +268,9 @@ func (UnimplementedAdminServiceServer) DeleteDomain(context.Context, *DomainRequ
 }
 func (UnimplementedAdminServiceServer) TriggerCrawl(context.Context, *TriggerCrawlRequest) (*CrawlResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TriggerCrawl not implemented")
+}
+func (UnimplementedAdminServiceServer) RescanAll(context.Context, *TriggerCrawlRequest) (*CrawlResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RescanAll not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -512,6 +527,24 @@ func _AdminService_TriggerCrawl_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_RescanAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TriggerCrawlRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).RescanAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/crawler.AdminService/RescanAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).RescanAll(ctx, req.(*TriggerCrawlRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -570,6 +603,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TriggerCrawl",
 			Handler:    _AdminService_TriggerCrawl_Handler,
+		},
+		{
+			MethodName: "RescanAll",
+			Handler:    _AdminService_RescanAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

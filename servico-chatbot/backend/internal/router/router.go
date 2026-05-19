@@ -46,10 +46,16 @@ func SetupRoutes(
 		}
 
 		protected := v1.Group("")
-		protected.Use(middleware.TracingMiddleware()) // gera/herda trace_id por request
+		protected.Use(middleware.TracingMiddleware())
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
 			protected.GET("/auth/me", authHandler.Me)
+
+			// ── Perfil do usuário autenticado ──────────────────────────
+			protected.GET("/profile", userHandler.GetProfile)
+			protected.PUT("/profile", userHandler.UpdateProfile)
+			protected.PUT("/profile/password", userHandler.ChangePassword)
+			protected.DELETE("/profile", userHandler.DeleteProfile)
 
 			users := protected.Group("/users")
 			{
@@ -89,7 +95,6 @@ func SetupRoutes(
 			admin := protected.Group("/admin")
 			admin.Use(middleware.AdminOnly())
 			{
-				// ── Gerenciamento de usuários ──────────────────────────────
 				adminUsers := admin.Group("/users")
 				{
 					adminUsers.GET("", userHandler.ListUsers)
@@ -99,24 +104,21 @@ func SetupRoutes(
 					adminUsers.POST("", userHandler.CreateUser)
 				}
 
-				// ── Gerenciamento de links ─────────────────────────────────
 				admin.POST("/links", adminHandler.AddLinks)
 				admin.GET("/links", adminHandler.ListLinks)
 				admin.GET("/links/status", adminHandler.GetLinksStatus)
 				admin.GET("/links/status/by-domain", adminHandler.GetLinksStatusByDomain)
 				admin.DELETE("/links/*url", adminHandler.DeleteLink)
 
-				// ── Crawler actions ────────────────────────────────────────
 				admin.POST("/extract-links", adminHandler.ExtractLinks)
 				admin.POST("/crawl", adminHandler.TriggerCrawl)
+				admin.POST("/crawl/rescan", adminHandler.RescanAll)
 				admin.POST("/crawl/single", adminHandler.CrawlSinglePage)
 
-				// ── Páginas crawleadas ─────────────────────────────────────
 				admin.GET("/pages", adminHandler.ListPages)
 				admin.GET("/pages/domain/:domain", adminHandler.ListPagesByDomain)
 				admin.GET("/page", adminHandler.GetPage)
 
-				// ── Domínios ───────────────────────────────────────────────
 				admin.GET("/domains/:domain/stats", adminHandler.GetDomainStats)
 				admin.DELETE("/domains/:domain", adminHandler.DeleteDomain)
 			}

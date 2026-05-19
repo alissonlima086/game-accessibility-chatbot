@@ -47,20 +47,17 @@ func New(cfg *config.Config) (*Server, error) {
 		log.Printf("Warning: Failed to connect to search gRPC: %v", err)
 	}
 
-	// Repositórios
 	userRepo := postgres.NewUserRepository(db)
 	conversationRepo := postgres.NewConversationRepository(db)
 	messageRepo := postgres.NewMessageRepository(db)
 
-	// Serviços
 	authService := service.NewAuthService(userRepo, cfg.JWT.SecretKey, cfg.JWT.ExpirationHours)
 	userService := service.NewUserService(userRepo)
 	conversationService := service.NewConversationService(conversationRepo, messageRepo, userRepo)
 	messageService := service.NewMessageService(messageRepo, conversationRepo)
 
-	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, authService) // authService para ChangePassword
 	conversationHandler := handler.NewConversationHandler(conversationService)
 	messageHandler := handler.NewMessageHandler(messageService, searchClient)
 	adminHandler := handler.NewAdminHandler(adminClient)

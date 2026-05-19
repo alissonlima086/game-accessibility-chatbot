@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import crawler_pb2 as crawler__pb2
+import crawler_pb2 as crawler__full__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -36,68 +36,73 @@ class AdminServiceStub(object):
         """
         self.AddLinks = channel.unary_unary(
                 '/crawler.AdminService/AddLinks',
-                request_serializer=crawler__pb2.AddLinksRequest.SerializeToString,
-                response_deserializer=crawler__pb2.AddLinksResponse.FromString,
+                request_serializer=crawler__full__pb2.AddLinksRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.AddLinksResponse.FromString,
                 _registered_method=True)
         self.ExtractLinks = channel.unary_unary(
                 '/crawler.AdminService/ExtractLinks',
-                request_serializer=crawler__pb2.ExtractLinksRequest.SerializeToString,
-                response_deserializer=crawler__pb2.ExtractLinksResponse.FromString,
+                request_serializer=crawler__full__pb2.ExtractLinksRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.ExtractLinksResponse.FromString,
                 _registered_method=True)
         self.CrawlSinglePage = channel.unary_unary(
                 '/crawler.AdminService/CrawlSinglePage',
-                request_serializer=crawler__pb2.CrawlSinglePageRequest.SerializeToString,
-                response_deserializer=crawler__pb2.CrawlSinglePageResponse.FromString,
+                request_serializer=crawler__full__pb2.CrawlSinglePageRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.CrawlSinglePageResponse.FromString,
                 _registered_method=True)
         self.GetLinksStatus = channel.unary_unary(
                 '/crawler.AdminService/GetLinksStatus',
-                request_serializer=crawler__pb2.Empty.SerializeToString,
-                response_deserializer=crawler__pb2.LinksStatusResponse.FromString,
+                request_serializer=crawler__full__pb2.Empty.SerializeToString,
+                response_deserializer=crawler__full__pb2.LinksStatusResponse.FromString,
                 _registered_method=True)
         self.GetLinksStatusByDomain = channel.unary_unary(
                 '/crawler.AdminService/GetLinksStatusByDomain',
-                request_serializer=crawler__pb2.Empty.SerializeToString,
-                response_deserializer=crawler__pb2.LinksByDomainResponse.FromString,
+                request_serializer=crawler__full__pb2.Empty.SerializeToString,
+                response_deserializer=crawler__full__pb2.LinksByDomainResponse.FromString,
                 _registered_method=True)
         self.ListLinks = channel.unary_unary(
                 '/crawler.AdminService/ListLinks',
-                request_serializer=crawler__pb2.ListLinksRequest.SerializeToString,
-                response_deserializer=crawler__pb2.ListLinksResponse.FromString,
+                request_serializer=crawler__full__pb2.ListLinksRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.ListLinksResponse.FromString,
                 _registered_method=True)
         self.DeleteLink = channel.unary_unary(
                 '/crawler.AdminService/DeleteLink',
-                request_serializer=crawler__pb2.DeleteLinkRequest.SerializeToString,
-                response_deserializer=crawler__pb2.OperationResponse.FromString,
+                request_serializer=crawler__full__pb2.DeleteLinkRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.OperationResponse.FromString,
                 _registered_method=True)
         self.ListPages = channel.unary_unary(
                 '/crawler.AdminService/ListPages',
-                request_serializer=crawler__pb2.ListPagesRequest.SerializeToString,
-                response_deserializer=crawler__pb2.ListPagesResponse.FromString,
+                request_serializer=crawler__full__pb2.ListPagesRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.ListPagesResponse.FromString,
                 _registered_method=True)
         self.ListPagesByDomain = channel.unary_unary(
                 '/crawler.AdminService/ListPagesByDomain',
-                request_serializer=crawler__pb2.ListPagesByDomainRequest.SerializeToString,
-                response_deserializer=crawler__pb2.ListPagesResponse.FromString,
+                request_serializer=crawler__full__pb2.ListPagesByDomainRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.ListPagesResponse.FromString,
                 _registered_method=True)
         self.GetPage = channel.unary_unary(
                 '/crawler.AdminService/GetPage',
-                request_serializer=crawler__pb2.GetPageRequest.SerializeToString,
-                response_deserializer=crawler__pb2.PageDetailResponse.FromString,
+                request_serializer=crawler__full__pb2.GetPageRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.PageDetailResponse.FromString,
                 _registered_method=True)
         self.GetDomainStats = channel.unary_unary(
                 '/crawler.AdminService/GetDomainStats',
-                request_serializer=crawler__pb2.DomainRequest.SerializeToString,
-                response_deserializer=crawler__pb2.DomainStatsResponse.FromString,
+                request_serializer=crawler__full__pb2.DomainRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.DomainStatsResponse.FromString,
                 _registered_method=True)
         self.DeleteDomain = channel.unary_unary(
                 '/crawler.AdminService/DeleteDomain',
-                request_serializer=crawler__pb2.DomainRequest.SerializeToString,
-                response_deserializer=crawler__pb2.DeleteDomainResponse.FromString,
+                request_serializer=crawler__full__pb2.DomainRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.DeleteDomainResponse.FromString,
                 _registered_method=True)
         self.TriggerCrawl = channel.unary_unary(
                 '/crawler.AdminService/TriggerCrawl',
-                request_serializer=crawler__pb2.TriggerCrawlRequest.SerializeToString,
-                response_deserializer=crawler__pb2.CrawlResponse.FromString,
+                request_serializer=crawler__full__pb2.TriggerCrawlRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.CrawlResponse.FromString,
+                _registered_method=True)
+        self.RescanAll = channel.unary_unary(
+                '/crawler.AdminService/RescanAll',
+                request_serializer=crawler__full__pb2.TriggerCrawlRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.CrawlResponse.FromString,
                 _registered_method=True)
 
 
@@ -182,73 +187,84 @@ class AdminServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RescanAll(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AdminServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'AddLinks': grpc.unary_unary_rpc_method_handler(
                     servicer.AddLinks,
-                    request_deserializer=crawler__pb2.AddLinksRequest.FromString,
-                    response_serializer=crawler__pb2.AddLinksResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.AddLinksRequest.FromString,
+                    response_serializer=crawler__full__pb2.AddLinksResponse.SerializeToString,
             ),
             'ExtractLinks': grpc.unary_unary_rpc_method_handler(
                     servicer.ExtractLinks,
-                    request_deserializer=crawler__pb2.ExtractLinksRequest.FromString,
-                    response_serializer=crawler__pb2.ExtractLinksResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.ExtractLinksRequest.FromString,
+                    response_serializer=crawler__full__pb2.ExtractLinksResponse.SerializeToString,
             ),
             'CrawlSinglePage': grpc.unary_unary_rpc_method_handler(
                     servicer.CrawlSinglePage,
-                    request_deserializer=crawler__pb2.CrawlSinglePageRequest.FromString,
-                    response_serializer=crawler__pb2.CrawlSinglePageResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.CrawlSinglePageRequest.FromString,
+                    response_serializer=crawler__full__pb2.CrawlSinglePageResponse.SerializeToString,
             ),
             'GetLinksStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLinksStatus,
-                    request_deserializer=crawler__pb2.Empty.FromString,
-                    response_serializer=crawler__pb2.LinksStatusResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.Empty.FromString,
+                    response_serializer=crawler__full__pb2.LinksStatusResponse.SerializeToString,
             ),
             'GetLinksStatusByDomain': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLinksStatusByDomain,
-                    request_deserializer=crawler__pb2.Empty.FromString,
-                    response_serializer=crawler__pb2.LinksByDomainResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.Empty.FromString,
+                    response_serializer=crawler__full__pb2.LinksByDomainResponse.SerializeToString,
             ),
             'ListLinks': grpc.unary_unary_rpc_method_handler(
                     servicer.ListLinks,
-                    request_deserializer=crawler__pb2.ListLinksRequest.FromString,
-                    response_serializer=crawler__pb2.ListLinksResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.ListLinksRequest.FromString,
+                    response_serializer=crawler__full__pb2.ListLinksResponse.SerializeToString,
             ),
             'DeleteLink': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteLink,
-                    request_deserializer=crawler__pb2.DeleteLinkRequest.FromString,
-                    response_serializer=crawler__pb2.OperationResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.DeleteLinkRequest.FromString,
+                    response_serializer=crawler__full__pb2.OperationResponse.SerializeToString,
             ),
             'ListPages': grpc.unary_unary_rpc_method_handler(
                     servicer.ListPages,
-                    request_deserializer=crawler__pb2.ListPagesRequest.FromString,
-                    response_serializer=crawler__pb2.ListPagesResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.ListPagesRequest.FromString,
+                    response_serializer=crawler__full__pb2.ListPagesResponse.SerializeToString,
             ),
             'ListPagesByDomain': grpc.unary_unary_rpc_method_handler(
                     servicer.ListPagesByDomain,
-                    request_deserializer=crawler__pb2.ListPagesByDomainRequest.FromString,
-                    response_serializer=crawler__pb2.ListPagesResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.ListPagesByDomainRequest.FromString,
+                    response_serializer=crawler__full__pb2.ListPagesResponse.SerializeToString,
             ),
             'GetPage': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPage,
-                    request_deserializer=crawler__pb2.GetPageRequest.FromString,
-                    response_serializer=crawler__pb2.PageDetailResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.GetPageRequest.FromString,
+                    response_serializer=crawler__full__pb2.PageDetailResponse.SerializeToString,
             ),
             'GetDomainStats': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDomainStats,
-                    request_deserializer=crawler__pb2.DomainRequest.FromString,
-                    response_serializer=crawler__pb2.DomainStatsResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.DomainRequest.FromString,
+                    response_serializer=crawler__full__pb2.DomainStatsResponse.SerializeToString,
             ),
             'DeleteDomain': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteDomain,
-                    request_deserializer=crawler__pb2.DomainRequest.FromString,
-                    response_serializer=crawler__pb2.DeleteDomainResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.DomainRequest.FromString,
+                    response_serializer=crawler__full__pb2.DeleteDomainResponse.SerializeToString,
             ),
             'TriggerCrawl': grpc.unary_unary_rpc_method_handler(
                     servicer.TriggerCrawl,
-                    request_deserializer=crawler__pb2.TriggerCrawlRequest.FromString,
-                    response_serializer=crawler__pb2.CrawlResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.TriggerCrawlRequest.FromString,
+                    response_serializer=crawler__full__pb2.CrawlResponse.SerializeToString,
+            ),
+            'RescanAll': grpc.unary_unary_rpc_method_handler(
+                    servicer.RescanAll,
+                    request_deserializer=crawler__full__pb2.TriggerCrawlRequest.FromString,
+                    response_serializer=crawler__full__pb2.CrawlResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -276,8 +292,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/AddLinks',
-            crawler__pb2.AddLinksRequest.SerializeToString,
-            crawler__pb2.AddLinksResponse.FromString,
+            crawler__full__pb2.AddLinksRequest.SerializeToString,
+            crawler__full__pb2.AddLinksResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -303,8 +319,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/ExtractLinks',
-            crawler__pb2.ExtractLinksRequest.SerializeToString,
-            crawler__pb2.ExtractLinksResponse.FromString,
+            crawler__full__pb2.ExtractLinksRequest.SerializeToString,
+            crawler__full__pb2.ExtractLinksResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -330,8 +346,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/CrawlSinglePage',
-            crawler__pb2.CrawlSinglePageRequest.SerializeToString,
-            crawler__pb2.CrawlSinglePageResponse.FromString,
+            crawler__full__pb2.CrawlSinglePageRequest.SerializeToString,
+            crawler__full__pb2.CrawlSinglePageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -357,8 +373,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/GetLinksStatus',
-            crawler__pb2.Empty.SerializeToString,
-            crawler__pb2.LinksStatusResponse.FromString,
+            crawler__full__pb2.Empty.SerializeToString,
+            crawler__full__pb2.LinksStatusResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -384,8 +400,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/GetLinksStatusByDomain',
-            crawler__pb2.Empty.SerializeToString,
-            crawler__pb2.LinksByDomainResponse.FromString,
+            crawler__full__pb2.Empty.SerializeToString,
+            crawler__full__pb2.LinksByDomainResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -411,8 +427,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/ListLinks',
-            crawler__pb2.ListLinksRequest.SerializeToString,
-            crawler__pb2.ListLinksResponse.FromString,
+            crawler__full__pb2.ListLinksRequest.SerializeToString,
+            crawler__full__pb2.ListLinksResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -438,8 +454,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/DeleteLink',
-            crawler__pb2.DeleteLinkRequest.SerializeToString,
-            crawler__pb2.OperationResponse.FromString,
+            crawler__full__pb2.DeleteLinkRequest.SerializeToString,
+            crawler__full__pb2.OperationResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -465,8 +481,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/ListPages',
-            crawler__pb2.ListPagesRequest.SerializeToString,
-            crawler__pb2.ListPagesResponse.FromString,
+            crawler__full__pb2.ListPagesRequest.SerializeToString,
+            crawler__full__pb2.ListPagesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -492,8 +508,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/ListPagesByDomain',
-            crawler__pb2.ListPagesByDomainRequest.SerializeToString,
-            crawler__pb2.ListPagesResponse.FromString,
+            crawler__full__pb2.ListPagesByDomainRequest.SerializeToString,
+            crawler__full__pb2.ListPagesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -519,8 +535,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/GetPage',
-            crawler__pb2.GetPageRequest.SerializeToString,
-            crawler__pb2.PageDetailResponse.FromString,
+            crawler__full__pb2.GetPageRequest.SerializeToString,
+            crawler__full__pb2.PageDetailResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -546,8 +562,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/GetDomainStats',
-            crawler__pb2.DomainRequest.SerializeToString,
-            crawler__pb2.DomainStatsResponse.FromString,
+            crawler__full__pb2.DomainRequest.SerializeToString,
+            crawler__full__pb2.DomainStatsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -573,8 +589,8 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/DeleteDomain',
-            crawler__pb2.DomainRequest.SerializeToString,
-            crawler__pb2.DeleteDomainResponse.FromString,
+            crawler__full__pb2.DomainRequest.SerializeToString,
+            crawler__full__pb2.DeleteDomainResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -600,8 +616,35 @@ class AdminService(object):
             request,
             target,
             '/crawler.AdminService/TriggerCrawl',
-            crawler__pb2.TriggerCrawlRequest.SerializeToString,
-            crawler__pb2.CrawlResponse.FromString,
+            crawler__full__pb2.TriggerCrawlRequest.SerializeToString,
+            crawler__full__pb2.CrawlResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RescanAll(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/crawler.AdminService/RescanAll',
+            crawler__full__pb2.TriggerCrawlRequest.SerializeToString,
+            crawler__full__pb2.CrawlResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -624,8 +667,8 @@ class SearchServiceStub(object):
         """
         self.Search = channel.unary_unary(
                 '/crawler.SearchService/Search',
-                request_serializer=crawler__pb2.SearchRequest.SerializeToString,
-                response_deserializer=crawler__pb2.SearchResponse.FromString,
+                request_serializer=crawler__full__pb2.SearchRequest.SerializeToString,
+                response_deserializer=crawler__full__pb2.SearchResponse.FromString,
                 _registered_method=True)
 
 
@@ -643,8 +686,8 @@ def add_SearchServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Search': grpc.unary_unary_rpc_method_handler(
                     servicer.Search,
-                    request_deserializer=crawler__pb2.SearchRequest.FromString,
-                    response_serializer=crawler__pb2.SearchResponse.SerializeToString,
+                    request_deserializer=crawler__full__pb2.SearchRequest.FromString,
+                    response_serializer=crawler__full__pb2.SearchResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -672,8 +715,8 @@ class SearchService(object):
             request,
             target,
             '/crawler.SearchService/Search',
-            crawler__pb2.SearchRequest.SerializeToString,
-            crawler__pb2.SearchResponse.FromString,
+            crawler__full__pb2.SearchRequest.SerializeToString,
+            crawler__full__pb2.SearchResponse.FromString,
             options,
             channel_credentials,
             insecure,

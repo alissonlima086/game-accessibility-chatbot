@@ -72,10 +72,21 @@ class AdminServicer(pb_grpc.AdminServiceServicer):
     def ListLinks(self, request, context):
         limit = request.limit or 20
         skip = request.skip or 0
-        status_filter = request.status or None
-        url_filter = request.url_filter or None
-        logger.info(f"ListLinks | limit={limit} skip={skip} status={status_filter} url_filter={url_filter}")
-        result = self.svc.list_links(limit=limit, skip=skip, status=status_filter, url_filter=url_filter)
+        # Proto retorna string vazia quando não enviado — normaliza para None
+        status_filter = request.status if request.status else None
+        url_filter = request.url_filter if request.url_filter else None
+        logger.info("ListLinks | limit=%d skip=%d status=%s url_filter=%s",
+                    limit, skip, status_filter, url_filter)
+        try:
+            result = self.svc.list_links(
+                limit=limit, skip=skip, status=status_filter, url_filter=url_filter
+            )
+        except Exception as e:
+            logger.error("ListLinks error: %s", e)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return pb.ListLinksResponse()
+
         items = [
             pb.LinkItem(
                 url=l.get("url", ""),
@@ -115,16 +126,16 @@ class AdminServicer(pb_grpc.AdminServiceServicer):
             return pb.PageDetailResponse()
         return pb.PageDetailResponse(
             url=page.get("url", ""),
-            title=page.get("title", ""),
-            description=page.get("description", ""),
-            text_content=page.get("text_content", ""),
-            summary=page.get("summary", ""),
+            title=page.get("title", "") or "",
+            description=page.get("description", "") or "",
+            text_content=page.get("text_content", "") or "",
+            summary=page.get("summary", "") or "",
             word_count=page.get("word_count", 0),
             keywords=page.get("keywords", []),
-            language=page.get("language", ""),
+            language=page.get("language", "") or "",
             status_code=page.get("status_code", 0),
             crawled_at=str(page.get("crawled_at", "")),
-            embedding_status=page.get("embedding_status", ""),
+            embedding_status=page.get("embedding_status", "") or "",
             chunks_count=page.get("chunks_count", 0),
         )
 
@@ -151,7 +162,6 @@ class AdminServicer(pb_grpc.AdminServiceServicer):
 
     def TriggerCrawl(self, request, context):
         limit = request.limit or 50
-        # Executa em background para não bloquear o gRPC e evitar deadline exceeded
         thread = threading.Thread(
             target=self.svc.crawl_pending_pages,
             kwargs={"limit": limit},
@@ -163,12 +173,32 @@ class AdminServicer(pb_grpc.AdminServiceServicer):
             timestamp=datetime.utcnow().isoformat(),
         )
 
+    def RescanAll(self, request, context):
+        """Reescan completo: reseta todos os links para 'pending' e dispara crawl."""
+        try:
+            count = self.svc.rescan_all()
+            thread = threading.Thread(
+                target=self.svc.crawl_pending_pages,
+                kwargs={"limit": request.limit or 500},
+                daemon=True,
+            )
+            thread.start()
+            return pb.CrawlResponse(
+                message=f"Reescan iniciado: {count} link(s) marcados para reprocessamento",
+                timestamp=datetime.utcnow().isoformat(),
+            )
+        except Exception as e:
+            logger.error("RescanAll error: %s", e)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return pb.CrawlResponse()
+
 
 def _to_page_summary(p: dict) -> pb.PageSummary:
     return pb.PageSummary(
         url=p.get("url", ""),
-        title=p.get("title", ""),
-        description=p.get("description", ""),
+        title=p.get("title", "") or "",
+        description=p.get("description", "") or "",
         status_code=p.get("status_code", 0),
         word_count=p.get("word_count", 0),
         crawled_at=str(p.get("crawled_at", "")),

@@ -12,6 +12,10 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+class UnauthorizedException extends ApiException {
+  const UnauthorizedException() : super('Sessão expirada. Faça login novamente.', statusCode: 401);
+}
+
 class ApiService {
   final String baseUrl;
   String? _token;
@@ -27,14 +31,15 @@ class ApiService {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
-  Future<Map<String, dynamic>> _handleResponse(http.Response res) async {
+  Future<dynamic> _handleResponse(http.Response res) async {
     dev.log('HTTP ${res.statusCode} ${res.request?.url}', name: 'API');
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    // 401 lança UnauthorizedException para o app deslogar automaticamente
+    if (res.statusCode == 401) throw const UnauthorizedException();
+    if (res.body.isEmpty) return null;
+    final body = jsonDecode(res.body);
     if (res.statusCode >= 200 && res.statusCode < 300) return body;
-    throw ApiException(
-      body['error'] as String? ?? 'Erro desconhecido',
-      statusCode: res.statusCode,
-    );
+    final err = (body is Map ? body['error'] : null) as String? ?? 'Erro desconhecido';
+    throw ApiException(err, statusCode: res.statusCode);
   }
 
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -45,15 +50,13 @@ class ApiService {
       headers: _headers,
       body: jsonEncode({'email': email, 'password': password}),
     );
-    final data = await _handleResponse(res);
-    final token = data['token'] as String;
-    setToken(token);
-    return AuthUser.fromJson(data['user'] as Map<String, dynamic>, token);
+    final data = await _handleResponse(res) as Map<String, dynamic>;
+    final tok = data['token'] as String;
+    setToken(tok);
+    return AuthUser.fromJson(data['user'] as Map<String, dynamic>, tok);
   }
 
-  Future<AuthUser> register(
-      String username, String email, String password) async {
-    // O backend retorna apenas UserResponse no /register (sem token).
+  Future<AuthUser> register(String username, String email, String password) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/v1/auth/register'),
       headers: _headers,
@@ -64,29 +67,61 @@ class ApiService {
         'role': 'USER',
       }),
     );
-    await _handleResponse(res); // lança ApiException em erro (ex: 409)
-
-    // Cadastro OK — faz login para obter token
+    await _handleResponse(res);
     return login(email, password);
   }
 
-  // ── Conversations ────────────────────────────────────────────────────────
+  // ── Profile ──────────────────────────────────────────────────────
+
+  Future<AuthUser> getProfile() async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/api/v1/profile'),
+      headers: _headers,
+    );
+    final data = await _handleResponse(res) as Map<String, dynamic>;
+    return AuthUser.fromJson(data, _token!);
+  }
+
+  Future<AuthUser> updateProfile(String username, String email) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/api/v1/profile'),
+      headers: _headers,
+      body: jsonEncode({'username': username, 'email': email}),
+    );
+    final data = await _handleResponse(res) as Map<String, dynamic>;
+    return AuthUser.fromJson(data, _token!);
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/api/v1/profile/password'),
+      headers: _headers,
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
+    await _handleResponse(res);
+  }
+
+  Future<void> deleteAccount() async {
+    final res = await http.delete(
+      Uri.parse('$baseUrl/api/v1/profile'),
+      headers: _headers,
+    );
+    await _handleResponse(res);
+  }
+
+  // ── Conversations ─────────────────────────────────────────────────────────
 
   Future<List<Conversation>> getConversations(String userId) async {
     final res = await http.get(
-      Uri.parse(
-          '$baseUrl/api/v1/users/$userId/conversations?limit=50'),
+      Uri.parse('$baseUrl/api/v1/users/$userId/conversations?limit=50'),
       headers: _headers,
     );
-    if (res.statusCode != 200) {
-      throw ApiException('Falha ao carregar conversas',
-          statusCode: res.statusCode);
-    }
-    final data = jsonDecode(res.body);
-    // Backend pode retornar null quando não há conversas
+    final data = await _handleResponse(res);
     if (data == null) return [];
-    final list = data as List<dynamic>;
-    return list
+    return (data as List<dynamic>)
         .map((e) => Conversation.fromJson(e as Map<String, dynamic>))
         .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -94,18 +129,12 @@ class ApiService {
 
   Future<List<ChatMessage>> getMessages(String conversationId) async {
     final res = await http.get(
-      Uri.parse(
-          '$baseUrl/api/v1/conversations/$conversationId/messages?limit=100'),
+      Uri.parse('$baseUrl/api/v1/conversations/$conversationId/messages?limit=100'),
       headers: _headers,
     );
-    if (res.statusCode != 200) {
-      throw ApiException('Falha ao carregar mensagens',
-          statusCode: res.statusCode);
-    }
-    final data = jsonDecode(res.body);
+    final data = await _handleResponse(res);
     if (data == null) return [];
-    final list = data as List<dynamic>;
-    return list
+    return (data as List<dynamic>)
         .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
         .toList()
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -116,13 +145,10 @@ class ApiService {
       Uri.parse('$baseUrl/api/v1/conversations/$conversationId'),
       headers: _headers,
     );
-    if (res.statusCode != 204) {
-      throw ApiException('Falha ao deletar conversa',
-          statusCode: res.statusCode);
-    }
+    await _handleResponse(res);
   }
 
-  // ── Chat ─────────────────────────────────────────────────────────────────
+  // ── Chat ──────────────────────────────────────────────────────────────────
 
   Future<ChatResponse> startChat(String userId, String content) async {
     final res = await http.post(
@@ -130,30 +156,17 @@ class ApiService {
       headers: _headers,
       body: jsonEncode({'user_id': userId, 'content': content}),
     );
-    final data = await _handleResponse(res);
-    try {
-      return ChatResponse.fromJson(data);
-    } catch (e, st) {
-      dev.log('ChatResponse.fromJson error: $e\nBody: $data',
-          name: 'API', stackTrace: st);
-      rethrow;
-    }
+    final data = await _handleResponse(res) as Map<String, dynamic>;
+    return ChatResponse.fromJson(data);
   }
 
-  Future<ChatResponse> sendMessage(
-      String conversationId, String content) async {
+  Future<ChatResponse> sendMessage(String conversationId, String content) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/v1/chat/$conversationId'),
       headers: _headers,
       body: jsonEncode({'content': content}),
     );
-    final data = await _handleResponse(res);
-    try {
-      return ChatResponse.fromJson(data);
-    } catch (e, st) {
-      dev.log('ChatResponse.fromJson error: $e\nBody: $data',
-          name: 'API', stackTrace: st);
-      rethrow;
-    }
+    final data = await _handleResponse(res) as Map<String, dynamic>;
+    return ChatResponse.fromJson(data);
   }
 }

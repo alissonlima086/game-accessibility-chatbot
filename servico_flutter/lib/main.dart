@@ -2,14 +2,13 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
-import 'screens/login_screen.dart';
-import 'screens/chat_screen.dart';
+import 'router.dart';
 import 'utils/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final api = ApiService(baseUrl: kBaseUrl);
+  final api  = ApiService(baseUrl: kBaseUrl);
   final auth = AuthService(api);
   await auth.initialize();
 
@@ -19,17 +18,25 @@ void main() async {
 class ChatbotApp extends StatelessWidget {
   final AuthService authService;
   final ApiService apiService;
-  const ChatbotApp({super.key, required this.authService, required this.apiService});
+
+  const ChatbotApp({
+    super.key,
+    required this.authService,
+    required this.apiService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final router = buildRouter(
+      authService: authService,
+      apiService: apiService,
+    );
+
+    return MaterialApp.router(
       title: 'Chatbot',
       theme: AppTheme.dark,
       debugShowCheckedModeBanner: false,
-      home: authService.isAuthenticated
-          ? ChatScreen(authService: authService, apiService: apiService)
-          : LoginScreen(authService: authService, apiService: apiService),
+      routerConfig: router,
     );
   }
 }
