@@ -73,16 +73,6 @@ JWT_EXPIRATION=24
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:8081
 ```
 
-### 3. Flutter — URL do backend
-
-Edite `servico_flutter/lib/utils/theme.dart` se necessário:
-
-```dart
-const String kBaseUrl = 'http://localhost:8080';
-```
-
----
-
 ## Execução
 
 ### Fluxo completo
